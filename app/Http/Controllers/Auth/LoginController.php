@@ -49,7 +49,11 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
-        return $this->success($user, "User Logged in", 200);
+        try{
+            $accessToken = $user->createToken("User Token")->accessToken;
+        return $this->success([$user, "access_token" => $accessToken], "User Logged in", 200);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Error Logging User", 400);}
+
     }
 
 

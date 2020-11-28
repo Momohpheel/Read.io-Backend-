@@ -22,7 +22,7 @@ Route::group(['prefix' => 'v1'], function(){
         Auth::routes();
         Route::post('/password', 'Auth\ResetPasswordController@changePassword')->middleware('auth:api');
     });
-    Route::post('profile', 'UserController@profile');
+    Route::post('profile', 'UserController@profile')->middleware('auth:api');
     Route::group(['prefix' => 'article'], function () {
         Route::post('/', 'UserController@writeArticle')->middleware('auth:api');
         Route::put('{id}', 'UserController@updateArticle')->middleware('auth:api');

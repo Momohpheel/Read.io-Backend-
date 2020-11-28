@@ -120,8 +120,9 @@ class RegisterController extends Controller
     protected function registered(Request $request, $user)
     {
         try{
+            $accessToken = $user->createToken("User Token")->accessToken;
             //Mail::to($user->email)->send(new newUsers);
-            return $this->success($user, "User Registered", 201);
+            return $this->success([$user, "access_token" => $accessToken], "User Registered", 201);
         }catch(Exception $e){
             return $this->error($e->getMessage(), "User Registeration failed", 400);
         }

@@ -21,13 +21,16 @@ class UserController extends Controller
             'bio' => 'required|string',
             'role' => 'required|string',
         ]);
+        try{
+            $user = User::find(auth()->user()->id);
+            $user->bio =$validated['bio'];
+            $user->role =$validated['role'];
+            $user->save();
 
-        $user = new User;
-        $user->bio =$validated['bio'];
-        $user->role =$validated['role'];
-        $user->save();
-
-        return $this->success($user, 201);
+            return $this->success($user, "Profile Added", 201);
+        }catch(Exception $e){
+        return $this->error($e->getMessage, "Updating profile failed", 400);
+        }
     }
     public function updateProfile(){}
 
@@ -37,34 +40,54 @@ class UserController extends Controller
             'type' => 'required|string',
             'title' => 'required|string',
         ]);
+            try{
 
-        $article = new Article;
-        $article->article =$validated['article'];
-        $article->type =$validated['type'];
-        $article->title =$validated['title'];
-        $article->save();
+                $article = new Article;
+                $article->article =$validated['article'];
+                $article->type =$validated['type'];
+                $article->title =$validated['title'];
+                $article->user_id = auth()->user()->id;
+                $article->save();
 
-        return $this->success($article, 201);
+                return $this->success($article,"Article Sucessfully Added", 201);
+
+
+            }catch(Exception $e){
+                return $this->error($e->getMessage, "Article couldnt be added", 400);
+            }
 
     }
+
+
     public function react($id){
-        $post = Article::find($id);
-        $react = React::where('liker', auth()->user()->id)->where('post_id', $post->id)->first();
-        if ($react){
-            $react->delete();
 
-            $post->love = $post->love - 1;
-            $post->save();
-        }
-        else{
-            $react = new React();
-            $react->liker = auth()->user()->id;
-            $react->post_id = $id;
-            $react->save();
+        try{
 
-            $post->love = $post->love + 1;
-            $post->save();
-        }
+            $post = Article::find($id);
+            $react = React::where('liker', auth()->user()->id)->where('post_id', $post->id)->first();
+            if ($react){
+                $react->delete();
+                $post->love = $post->love - 1;
+                $post->save();
+
+                return $this->success($post, "You just unliked this post", 200);
+            }
+            else{
+                $react = new React();
+                $react->liker = auth()->user()->id;
+                $react->post_id = $id;
+                $react->save();
+
+                $post->love = $post->love + 1;
+                $post->save();
+
+                return $this->success($post, "You just liked this post", 200);
+            }
+
+
+
+        }catch(Exception $e){return $this->error($e->getMessage, "You couldnt react to this post", 400);}
+
     }
 
     public function updateArticle(Request $request, $id){
@@ -74,14 +97,17 @@ class UserController extends Controller
             'type' => 'required|string',
             'title' => 'required|string',
         ]);
+            try{
+                $article = Article::where('id', $id)->where('user_id', auth()->user()->id)->first();
+                $article->article =$validated['article'];
+                $article->type =$validated['type'];
+                $article->title =$validated['title'];
+                $article->save();
 
-        $article = Article::where('id', $id)->where('user_id', auth()->user()->id)->first();
-        $article->article =$validated['article'];
-        $article->type =$validated['type'];
-        $article->title =$validated['title'];
-        $article->save();
+                return $this->success($article, 201);
 
-        return $this->success($article, 201);
+
+            }catch(Exception $e){return $this->error($e->getMessage, "Article Update failed", 400);}
 
     }
 
