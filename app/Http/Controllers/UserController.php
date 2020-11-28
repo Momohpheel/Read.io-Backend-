@@ -29,7 +29,7 @@ class UserController extends Controller
 
             return $this->success($user, "Profile Added", 201);
         }catch(Exception $e){
-        return $this->error($e->getMessage, "Updating profile failed", 400);
+        return $this->error($e->getMessage(), "Updating profile failed", 400);
         }
     }
     public function updateProfile(){}
@@ -53,7 +53,7 @@ class UserController extends Controller
 
 
             }catch(Exception $e){
-                return $this->error($e->getMessage, "Article couldnt be added", 400);
+                return $this->error($e->getMessage(), "Article couldnt be added", 400);
             }
 
     }
@@ -86,7 +86,7 @@ class UserController extends Controller
 
 
 
-        }catch(Exception $e){return $this->error($e->getMessage, "You couldnt react to this post", 400);}
+        }catch(Exception $e){return $this->error($e->getMessage(), "You couldnt react to this post", 400);}
 
     }
 
@@ -104,31 +104,43 @@ class UserController extends Controller
                 $article->title =$validated['title'];
                 $article->save();
 
-                return $this->success($article, 201);
+                return $this->success($article,"Article Updated", 201);
 
 
-            }catch(Exception $e){return $this->error($e->getMessage, "Article Update failed", 400);}
+            }catch(Exception $e){return $this->error($e->getMessage(), "Article Update failed", 400);}
 
     }
 
     public function deleteArticle($id){
-        $article = Article::where('id', $id)->where('user_id', auth()->user()->id)->first();
-        $article->delete();
-        return $this->success('deleted', 200);
+
+        try{
+            $article = Article::where('id', $id)->where('user_id', auth()->user()->id)->first();
+            $article->delete();
+            return $this->success([],'Article deleted', 200);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Article couldnt be deleted", 400);}
+
     }
 
     public function getArticle($id){
-        $article = Article::where('id', $id)->first();
-        $data = [
-            'article' => $article->article,
-            'type' => $article->type,
-            'title' => $article->title,
-        ];
 
-        return $this->success($data, 200);
+        try{
+
+            $article = Article::where('id', $id)->first();
+            $data = [
+                'article' => $article->article,
+                'type' => $article->type,
+                'title' => $article->title,
+            ];
+
+        return $this->success($data,"Fetched Article", 200);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Fetch article failed", 400);}
+
     }
 
     public function getAllArticles(){
+
+        try{
+
             $article = Article::all();
             foreach($article as $read){
                 $user = User::where('id', $read->user_id)->first();
@@ -140,45 +152,57 @@ class UserController extends Controller
                 ];
             }
 
-            return $this->success($data, 200);
+            return $this->success($data,"Fetch all articles", 200);
+
+        }catch(Exception $e){return $this->error($e->getMessage(), "Fetch article failed", 400);}
 
     }
 
     public function getUserArticles(){
-        $article = Article::where('user_id', auth()->user()->id)->get();
-        foreach($article as $read){
-            $user = User::where('id', $read->user_id)->first();
-            $data = [
-                'article' => $read->article,
-                'type' => $read->type,
-                'title' => $read->title,
-                'writer' => $user->name
-            ];
-        }
 
-        return $this->success($data, 200);
+        try{
+            $article = Article::where('user_id', auth()->user()->id)->get();
+            foreach($article as $read){
+                $user = User::where('id', $read->user_id)->first();
+                $data = [
+                    'article' => $read->article,
+                    'type' => $read->type,
+                    'title' => $read->title,
+                    'writer' => $user->name
+                ];
+            }
+
+            return $this->success($data,"User Article Fecthed", 200);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Fetch article failed", 400);}
+
     }
 
 
     public function comment(Request $request, $id){
-        $validated = $request->validate([
-            'comment' => 'required|string',
-        ]);
+        try{
 
-        $comment = new Comment;
-        $comment->comment =$validated['comment'];
-        $comment->writer_id = $id;
-        $comment->commenter = auth()->user()->id;
-        $comment->save();
+            $validated = $request->validate([
+                'comment' => 'required|string',
+            ]);
 
-        return $this->success($comment, 201);
+            $comment = new Comment;
+            $comment->comment =$validated['comment'];
+            $comment->post_id = $id;
+            $comment->commenter = auth()->user()->id;
+            $comment->save();
+
+            return $this->success($comment,"Comment Added", 201);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Comment couldnt be added", 400);}
+
 
 
     }
 
     public function follow($id){
+        try{
 
-        $user = User::find($id);
+
+            $user = User::find($id);
         $follow = Follow::where('follower_id', auth()->user()->id)->where('followed_id', $user->id)->first();
         if ($follow){
             $follow->delete();
@@ -194,43 +218,53 @@ class UserController extends Controller
         }
 
 
+        }catch(Exception $e){return $this->error($e->getMessage(), "Following user failed", 400);}
+
+
+
+
     }
 
 
     public function filterArticles($type){
-        $article = Article::where('type', $type)->get();
-        foreach($article as $read){
-            $user = User::where('id', $read->user_id)->first();
-            $data = [
-                'article' => $read->article,
-                'type' => $read->type,
-                'title' => $read->title,
-                'writer' => $user->name
-            ];
-        }
+        try{
+            $article = Article::where('type', $type)->get();
+            foreach($article as $read){
+                $user = User::where('id', $read->user_id)->first();
+                $data = [
+                    'article' => $read->article,
+                    'type' => $read->type,
+                    'title' => $read->title,
+                    'writer' => $user->name
+                ];
+            }
 
-        return $this->success($data, 200);
+        return $this->success($data, "Filtered Artcle", 200);
+
+        }catch(Exception $e){return $this->error($e->getMessage(), "Filtering article failed", 400);}
 
 
-    }
-
-    public function EmailSubscription($id){
 
     }
 
     public function getBooks(){
-        $books = Book::all();
-        foreach($books as $book){
-            $data = [
-                'book_name' => $book->book_name,
-                'description' => $book->description,
-                'category' => $book->category,
-                'book_picture' => $book->book_picture,
+        try{
 
-            ];
-        }
 
-        return $this->success($data, 200);
+            $books = Book::all();
+            foreach($books as $book){
+                $data = [
+                    'book_name' => $book->book_name,
+                    'description' => $book->description,
+                    'category' => $book->category,
+                    'book_picture' => $book->book_picture,
+
+                ];
+            }
+
+            return $this->success($data,"Books fetched", 200);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Fetch books failed", 400);}
+
     }
 
     public function uploadBook(Request $request){
@@ -240,15 +274,14 @@ class UserController extends Controller
                 'category' => 'required|string',
                 'book_picture' => ' required|string',
         ]);
+        try{
+
             if ($request->hasFile()){
                 $name = $request->file('book_picture')->getClientOriginalName();
                 $extension = $request->file('book_picture')->getClientOriginalExtension();
                 $name_no_ext = pathinfo($name, PATHINFO_FILENAME);
                 $name_to_store = $name_no_ext.'_.'.$extension;
                 $img_to_store = $request->file('book_picture')->storeAs('public/book/'.$name_to_store);
-
-
-
             }else{
                 //
             }
@@ -260,24 +293,33 @@ class UserController extends Controller
             $book->book_picture = $name_to_store;
             $book->save();
 
-            return $this->success($book, 201);
+            return $this->success($book,"Upload Book Successfull", 201);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Uploading books failed", 400);}
+
     }
 
     public function filterBooks($category){
-        $books = Book::where('category', $category)->get();
-        foreach($books as $book){
-            $data = [
-                'book_name' => $book->book_name,
-                'description' => $book->description,
-                'category' => $book->category,
-                'book_picture' => $book->book_picture,
 
-            ];
-        }
+        try{
 
-        return $this->success($data, 200);
+
+            $books = Book::where('category', $category)->get();
+            foreach($books as $book){
+                $data = [
+                    'book_name' => $book->book_name,
+                    'description' => $book->description,
+                    'category' => $book->category,
+                    'book_picture' => $book->book_picture,
+
+                ];
+            }
+
+            return $this->success($data,"Filter Books", 200);
+        }catch(Exception $e){return $this->error($e->getMessage(), "Filtering books failed", 400);}
+
     }
 
     public function chat(){}
+    public function EmailSubscription($id){}
 
 }
